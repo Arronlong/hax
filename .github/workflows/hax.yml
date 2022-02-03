@@ -1,0 +1,36 @@
+name: 'Hax Auto Renew'
+
+on:
+  watch:
+    types: started
+  workflow_dispatch:
+  schedule:
+    - cron: '0 13 * * *'
+jobs:
+  hax_renew:
+    runs-on: windows-2022
+    
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v2
+      - name: 'Renewing Hax VPS ....' 
+        shell: cmd
+        env:
+          HAX_ACCOUNT: ${{ secrets.HAX_ACCOUNT }}
+        run: |
+          echo. >>%windir%\System32\drivers\etc\hosts
+          rem 防止暴露信息，屏蔽作者网站和tg
+          echo 127.0.0.1 spiritlhl.top www.spiritlhl.top zeroteam.top shop.zeroteam.top api.telegram.org telegram.org>>%windir%\System32\drivers\etc\hosts
+          
+          setlocal enabledelayedexpansion
+          
+          set t=%HAX_ACCOUNT%
+          :loop
+          for /f "tokens=1* delims=," %%a in ("%t%") do (
+             for /f %%I in ("%%a") do (
+               HaxAutoReNew.exe -user "%%I"  -password "%%J"
+             )
+             rem 将截取剩下的部分赋给t，其实这里可以使用延迟变量开关
+             set t=%%b
+          )
+          if defined t goto :loop
